@@ -1,0 +1,1 @@
+Clone from https://github.com/astuetz/PagerSlidingTabStrip.
