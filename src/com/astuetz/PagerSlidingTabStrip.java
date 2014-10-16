@@ -56,6 +56,8 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
     };
 	// @formatter:on
 
+	static final String LOG_TAG = "PagerSlidingTabStrip";
+	
 	private LinearLayout.LayoutParams defaultTabLayoutParams;
 	private LinearLayout.LayoutParams expandedTabLayoutParams;
 
@@ -286,7 +288,7 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 	}
 
 	private void scrollToChild(int position, int offset) {
-
+		
 		if (tabCount == 0) {
 			return;
 		}
@@ -294,11 +296,15 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 		int newScrollX = tabsContainer.getChildAt(position).getLeft() + offset;
 
 		if (position > 0 || offset > 0) {
+			// 让indicator停在距离边缘scrollOffset的地方
 			newScrollX -= scrollOffset;
 		}
+		
+		L.d(LOG_TAG, "scrollToChild position:%d, offset:%d, getLeft:%d, newScrollX:%d.", position, offset, tabsContainer.getChildAt(position).getLeft(), newScrollX);
 
 		if (newScrollX != lastScrollX) {
 			lastScrollX = newScrollX;
+			// 如果newScrollX<0，是不会移动的
 			scrollTo(newScrollX, 0);
 		}
 
@@ -330,10 +336,21 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 			final float nextTabLeft = nextTab.getLeft();
 			final float nextTabRight = nextTab.getRight();
 
-			lineLeft = (currentPositionOffset * nextTabLeft + (1f - currentPositionOffset) * lineLeft);
-			lineRight = (currentPositionOffset * nextTabRight + (1f - currentPositionOffset) * lineRight);
+			// 本来的写法
+//			lineLeft = (currentPositionOffset * nextTabLeft + (1f - currentPositionOffset) * lineLeft);
+//			lineRight = (currentPositionOffset * nextTabRight + (1f - currentPositionOffset) * lineRight);
+			
+			// 另一种写法
+//			lineLeft = currentPositionOffset * (nextTabLeft - lineLeft) + lineLeft;
+//			lineRight = currentPositionOffset * (nextTabRight - lineRight) + lineRight;
+			
+			// 比较好理解的写法。【indicator左边在第一个tab的宽度范围内变动，右边在第二个tab的宽度范围内变动】
+			lineLeft = currentPositionOffset * currentTab.getWidth() + lineLeft;
+			lineRight = currentPositionOffset * nextTab.getWidth() + lineRight;
 		}
 
+//		L.d(LOG_TAG, "onDraw lineLeft:%f, lineRight:%f.", lineLeft, lineRight);
+		
 		canvas.drawRect(lineLeft, height - indicatorHeight, lineRight, height, rectPaint);
 
 		// draw underline
@@ -357,7 +374,7 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 
 			currentPosition = position;
 			currentPositionOffset = positionOffset;
-
+			
 			scrollToChild(position, (int) (positionOffset * tabsContainer.getChildAt(position).getWidth()));
 
 			invalidate();
